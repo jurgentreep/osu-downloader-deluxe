@@ -19,19 +19,17 @@ const options = {
 
 module.exports = class Auth {
     login(next) {
-        const req = https.request(options, (res) => {
-            // We only need the headers so there's not need to wait for the response data
-            if (next) {
-                next(res.headers['set-cookie'].join('; '));
-            }
+        return new Promise((resolve, reject) => {
+            const req = https.request(options, (res) => {
+                // We only need the headers so there's not need to wait for the response data
+                resolve(res.headers['set-cookie'].join('; '));
+            });
+
+            req.on('error', console.error);
+
+            req.write(postData);
+
+            req.end();
         });
-
-        req.on('error', (e) => {
-            console.error(e);
-        });
-
-        req.write(postData);
-
-        req.end();
     }
 };

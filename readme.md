@@ -13,7 +13,7 @@ npm install
 ```
 cp .env.example .env
 ```
-4. Put your *username* and *password* in the file
+4. Put your *username*, *password* and *api key* in the `.env` file
 
 ## Usage
 
@@ -21,3 +21,10 @@ cp .env.example .env
 ```
 node app.js
 ```
+
+## Todo
+* Skip already installed maps
+* Allow user to supply a list of artist
+* Show progress
+* Parrallel downloads
+* Speed limitation

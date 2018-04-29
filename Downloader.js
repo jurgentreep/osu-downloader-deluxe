@@ -1,44 +1,77 @@
 const https = require('https');
 const fs = require('fs');
-
-const options = {
-    hostname: 'osu.ppy.sh',
-    port: 443,
-    path: '/beatmapsets/764602/download',
-    method: 'GET',
-    headers: {}
-};
+const sanitizeFilename = require('sanitize-filename');
 
 module.exports = class Downloader {
     constructor(authCookie) {
-        this.options = options;
-        this.options.headers.cookie = authCookie;
+        this.authCookie = authCookie;
     }
 
-    get() {
-        https.request(this.options, res => {
-            const downloadUrl = new URL(res.headers.location);
-            // this actually makes a reference to the object not a good idea =.="
-            const options = this.options;
-            options.hostname = downloadUrl.host;
-            options.path = downloadUrl.pathname + downloadUrl.search;
+    get(beatmapSetIds) {
+        return beatmapSetIds.reduce((promise, beatmapSetId) => {
+            return promise.then(() => this.getBeatmapSet(beatmapSetId));
+        }, Promise.resolve());
+    }
 
-            https.request(options, res => {
-                const regex = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/i
-                const filename = regex.exec(res.headers['content-disposition'])[2];
+    getBeatmapSet(beatmapSetId) {
+        return this.getDownloadUrl(beatmapSetId)
+            .then(downloadUrl => this.download(downloadUrl))
+    }
+
+    getDownloadUrl(beatmapSetId) {
+        return new Promise((resolve, reject) => {
+            https.request({
+                hostname: 'osu.ppy.sh',
+                port: 443,
+                path: `/beatmapsets/${beatmapSetId}/download`,
+                method: 'GET',
+                headers: {
+                    cookie: this.authCookie
+                }
+            }, res => {
+                // We only need the headers so there's not need to wait for the response data
+                resolve(new URL(res.headers.location));
+            })
+                .on('error', error => reject(error))
+                .end();
+        });
+    }
+
+    download(downloadUrl) {
+        return new Promise((resolve, reject) => {
+            https.request({
+                hostname: downloadUrl.host,
+                port: 443,
+                path: downloadUrl.pathname + downloadUrl.search,
+                method: 'GET',
+                headers: {
+                    cookie: this.authCookie
+                }
+            }, res => {
+                const filename = this.getFilename(res.headers);
                 const path = `./downloads/${filename}`;
                 const writeStream = fs.createWriteStream(path);
 
+                writeStream.on('error', error => reject(error));
+
                 res.pipe(writeStream);
+
+                res.on('end', () => resolve(filename));
             })
-                .on('error', (e) => {
-                    console.error(e);
-                })
+                .on('error', error => reject(error))
                 .end();
-        })
-            .on('error', (e) => {
-                console.error(e);
-            })
-            .end();
+        });
+    }
+
+    getFilename(headers) {
+        let filename = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/i
+            .exec(headers['content-disposition'])[2];
+
+        /**
+         * The header doesn't always return a valid filename
+         * Example: 114137 P*Light - TRIGGER*HAPPY (Extend Ver.).osz
+         * which contains the * character
+         */
+        return sanitizeFilename(filename);
     }
 };

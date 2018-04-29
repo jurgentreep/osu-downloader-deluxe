@@ -1,0 +1,29 @@
+{
+  "name": "osu-downloader-deluxe",
+  "version": "1.0.0",
+  "description": "Download beatmaps from your favorite mapper",
+  "main": "app.js",
+  "dependencies": {
+    "dotenv": "^5.0.1",
+    "sanitize-filename": "^1.6.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jurgentreep/osu-downloader-deluxe.git"
+  },
+  "keywords": [
+    "osu",
+    "downloader",
+    "deluxe"
+  ],
+  "author": "Jurgen Treep",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jurgentreep/osu-downloader-deluxe/issues"
+  },
+  "homepage": "https://github.com/jurgentreep/osu-downloader-deluxe#readme"
+}
