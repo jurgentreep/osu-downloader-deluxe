@@ -15,7 +15,7 @@ module.exports = class Downloader {
 
     getBeatmapSet(beatmapSetId) {
         return this.getDownloadUrl(beatmapSetId)
-            .then(downloadUrl => this.download(downloadUrl))
+            .then(downloadUrl => this.download(downloadUrl));
     }
 
     getDownloadUrl(beatmapSetId) {
@@ -29,10 +29,17 @@ module.exports = class Downloader {
                     cookie: this.authCookie
                 }
             }, res => {
-                // We only need the headers so there's not need to wait for the response data
-                resolve(new URL(res.headers.location));
+                if (res.headers.location) {
+                    // We only need the headers so there's not need to wait for the response data
+                    resolve(new URL(res.headers.location));
+                } else {
+                    // TODO: handle the reject that's started here because we should be able to
+                    // continue to the next one
+                    // Maybe catch() higher up the chain?
+                    reject(beatmapSetId);
+                }
             })
-                .on('error', error => reject(error))
+                .on('error', reject)
                 .end();
         });
     }

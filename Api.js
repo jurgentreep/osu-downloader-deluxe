@@ -23,9 +23,11 @@ module.exports = class Api {
 
                 res.on('end', () => {
                     resolve(
-                        JSON.parse(rawData)
-                            .map(metadata => metadata.beatmapset_id)
-                    );
+                        Array.from(new Set(
+                            JSON.parse(rawData)
+                                .map(metadata => metadata.beatmapset_id)
+                        ))
+                    )
                 });
             })
                 .on('error', (e) => {
