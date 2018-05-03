@@ -21,7 +21,7 @@ auth.login()
             .then(results => {
                 return new Promise((resolve, reject) => {
                     const filteredIds = results[0].filter(beatmapId => {
-                        return results[1].indexOf(beatmapId) < 1;
+                        return results[1].indexOf(beatmapId) < 0;
                     });
 
                     resolve(filteredIds);

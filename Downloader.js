@@ -1,6 +1,7 @@
 const https = require('https');
 const fs = require('fs');
 const sanitizeFilename = require('sanitize-filename');
+const path = require('path');
 
 module.exports = class Downloader {
     constructor(authCookie) {
@@ -15,7 +16,8 @@ module.exports = class Downloader {
 
     getBeatmapSet(beatmapSetId) {
         return this.getDownloadUrl(beatmapSetId)
-            .then(downloadUrl => this.download(downloadUrl));
+            .then(downloadUrl => this.download(downloadUrl))
+            .catch(errorId => this.addToIgnoreList(errorId));
     }
 
     getDownloadUrl(beatmapSetId) {
@@ -56,8 +58,8 @@ module.exports = class Downloader {
                 }
             }, res => {
                 const filename = this.getFilename(res.headers);
-                const path = `./downloads/${filename}`;
-                const writeStream = fs.createWriteStream(path);
+                const downloadPath = path.join(process.env.OSU_DIRECTORY, `/Downloads/${filename}`);
+                const writeStream = fs.createWriteStream(downloadPath);
 
                 writeStream.on('error', error => reject(error));
 
@@ -71,7 +73,7 @@ module.exports = class Downloader {
     }
 
     getFilename(headers) {
-        let filename = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/i
+        const filename = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/i
             .exec(headers['content-disposition'])[2];
 
         /**
@@ -80,5 +82,12 @@ module.exports = class Downloader {
          * which contains the * character
          */
         return sanitizeFilename(filename);
+    }
+
+    addToIgnoreList(errorId) {
+        return new Promise((resolve, reject) => {
+            // TODO: Creat an ignore list and add the beatmap set id
+            resolve(`Failed downloadin beatmap with id ${errorId}`);
+        });
     }
 };
