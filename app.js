@@ -18,21 +18,18 @@ auth.login()
             api.getBeatmapSetIds('RLC'),
             osu.getInstalledBeatmapIds(),
         ])
-            .then(results => {
-                return new Promise((resolve, reject) => {
-                    const filteredIds = results[0].filter(beatmapId => {
-                        return results[1].indexOf(beatmapId) < 0;
-                    });
-
-                    resolve(filteredIds);
-                });
-            })
+            .then(results => filterIds(results))
             .then(beatmapSetIds => downloader.get(beatmapSetIds))
-            .then(result => {
-                console.log(result);
-                console.log('yay');
-            })
-            .catch(e => {
-                console.error(e);
-            });
+            .then(console.log)
+            .catch(console.error);
     });
+
+function filterIds([newBeatmapIds, installedBeatmapIds]) {
+    return new Promise((resolve, reject) => {
+        const filteredIds = newBeatmapIds.filter(beatmapId => {
+            return installedBeatmapIds.indexOf(beatmapId) < 0;
+        });
+
+        resolve(filteredIds);
+    });
+}
