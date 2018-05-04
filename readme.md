@@ -13,7 +13,8 @@ npm install
 ```
 cp .env.example .env
 ```
-4. Put your *username*, *password* and *api key* in the `.env` file
+4. Fill out the `.env` file
+5. Create a `mappers.txt` file and add the names or ids of your favorite mappers to it (one per line)
 
 ## Usage
 
@@ -23,8 +24,9 @@ node app.js
 ```
 
 ## Todo
-* Skip already installed maps
-* Allow user to supply a list of artist
 * Show progress
 * Parrallel downloads
+    * RxJs
+* Npm run scripts
 * Speed limitation
+* GUI

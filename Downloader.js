@@ -35,9 +35,6 @@ module.exports = class Downloader {
                     // We only need the headers so there's not need to wait for the response data
                     resolve(new URL(res.headers.location));
                 } else {
-                    // TODO: handle the reject that's started here because we should be able to
-                    // continue to the next one
-                    // Maybe catch() higher up the chain?
                     reject(beatmapSetId);
                 }
             })
@@ -61,13 +58,16 @@ module.exports = class Downloader {
                 const downloadPath = path.join(process.env.OSU_DIRECTORY, `/Downloads/${filename}`);
                 const writeStream = fs.createWriteStream(downloadPath);
 
-                writeStream.on('error', error => reject(error));
+                writeStream.on('error', reject);
 
                 res.pipe(writeStream);
 
-                res.on('end', () => resolve(filename));
+                res.on('end', () => {
+                    console.log(`Succesfully downloaded ${filename}`);
+                    resolve(filename)
+                });
             })
-                .on('error', error => reject(error))
+                .on('error', reject)
                 .end();
         });
     }

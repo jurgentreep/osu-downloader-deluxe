@@ -15,7 +15,7 @@ auth.login()
         const osu = new Osu();
 
         Promise.all([
-            api.getBeatmapSetIds('RLC'),
+            api.getBeatmapIds(),
             osu.getInstalledBeatmapIds(),
         ])
             .then(results => filterIds(results))

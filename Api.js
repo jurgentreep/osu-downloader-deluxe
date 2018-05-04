@@ -1,16 +1,37 @@
 const https = require('https');
+const Config = require('./Config');
 
 module.exports = class Api {
     constructor() {
         this.apiKey = process.env.API_KEY;
     }
 
-    getBeatmapSetIds(username) {
+    getBeatmapIds() {
+        return new Promise((resolve, reject) => {
+            const config = new Config();
+
+            config.getMappers().then(mappers => {
+                const promises = mappers.map(mapper => {
+                    return this.getBeatmapIdsFromMapper(mapper)
+                        .catch(error => {
+                            console.error(error);
+                            return new Promise((resolve, reject) => resolve([]));
+                        });
+                });
+
+                Promise.all(promises).then(results => {
+                    resolve([].concat(...results));
+                });
+            });
+        });
+    }
+
+    getBeatmapIdsFromMapper(mapper) {
         return new Promise((resolve, reject) => {
             const options = {
                 hostname: 'osu.ppy.sh',
                 port: 443,
-                path: `/api/get_beatmaps?k=${this.apiKey}&u=${username}`,
+                path: `/api/get_beatmaps?k=${this.apiKey}&u=${encodeURI(mapper)}`,
                 method: 'GET',
             };
 
@@ -30,9 +51,7 @@ module.exports = class Api {
                     )
                 });
             })
-                .on('error', (e) => {
-                    reject(e);
-                })
+                .on('error', reject)
                 .end();
         });
     }
