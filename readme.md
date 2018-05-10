@@ -32,3 +32,4 @@ node app.js
 * Speed limitation
 * GUI
 * Detect when network connection has dropped
+* Store cookie somewhere and use it to login

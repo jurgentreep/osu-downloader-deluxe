@@ -13,7 +13,7 @@ function init() {
     ])
         .then(([beatmapIds, downloader]) => downloader.get(beatmapIds))
         .then(console.info)
-        .catch(console.error);
+        .catch(error => console.error('error', error));
 }
 
 init();
@@ -24,7 +24,7 @@ function getBeatmapIds() {
 
     return Promise.all([
         api.getBeatmapIds(),
-        osu.getInstalledBeatmapIds(),
+        osu.getBeatmapIds(),
     ])
         .then(results => filterIds(results));
 

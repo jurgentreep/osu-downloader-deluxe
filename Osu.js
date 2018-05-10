@@ -8,30 +8,55 @@ module.exports = class Osu {
      * directories can be named anything. If you want to be thorough you
      * should read the beatmap set id's from the `.osu` file.
      *
-     * I've diced to do it this way because it's easier and faster.
+     * I've decided to do it this way because it's easier and faster.
      */
-    getInstalledBeatmapIds() {
-        return new Promise((resolve, reject) => {
-            const songsDirectory = path.join(process.env.OSU_DIRECTORY, '/Songs');
+    getBeatmapIds() {
+        return new Promise((reject, resolve) => {
+            const promises = this.getDirectories().map(directory => {
+                return this.readDirectory(directory)
+                    .then(directoryContents => this.extractIds(directoryContents));
+            });
 
-            fs.readdir(songsDirectory, (error, files) => {
+            Promise.all(promises)
+                .then(beatmapIdArrays => {
+                    console.log('Succesfully retrieved beatmap ids from osu installation');
+                    resolve([].concat(...beatmapIdArrays));
+                })
+                .catch(reject);
+        });
+    }
+
+    getDirectories() {
+        return [
+            '/Songs',
+            '/Downloads'
+        ].map(directoryName =>
+            path.join(process.env.OSU_DIRECTORY, directoryName));
+    }
+
+    readDirectory(directory) {
+        return new Promise((resolve, reject) => {
+            fs.readdir(directory, (error, files) => {
                 if (error) {
                     reject(error);
                 }
 
-                const beatmapIds = files.map(file => {
-                    const match = /^(\d+)/.exec(file);
-
-                    if (match) {
-                        return match[0];
-                    } else {
-                        return null;
-                    }
-                })
-                    .filter(beatmapId => beatmapId !== null);
-
-                resolve(beatmapIds);
+                resolve(files);
             });
         });
+    }
+
+    extractIds(files) {
+        const beatmapIds = files.map(file => {
+            const match = /^(\d+)/.exec(file);
+
+            // Maybe return 0 intead of null so the elements kinds stays PACKED_SMI_ELEMENTS
+            // and is thus faster to process although I like the clarity of null.
+            // Besides I'm using a regex function above which is way more expensive xD
+            return match ? match[0] : null;
+        })
+            .filter(beatmapId => beatmapId !== null);
+
+        return Promise.resolve(beatmapIds);
     }
 };
