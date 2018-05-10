@@ -9,6 +9,8 @@ module.exports = class Downloader {
     }
 
     get(beatmapSetIds) {
+        console.info('Starting downloads');
+
         return beatmapSetIds.reduce((promise, beatmapSetId) => {
             return promise.then(() => this.getBeatmapSet(beatmapSetId));
         }, Promise.resolve());
@@ -17,7 +19,7 @@ module.exports = class Downloader {
     getBeatmapSet(beatmapSetId) {
         return this.getDownloadUrl(beatmapSetId)
             .then(downloadUrl => this.download(downloadUrl))
-            .catch(errorId => this.addToIgnoreList(errorId));
+            .catch(errorId => this.addIgnoreList(errorId));
     }
 
     getDownloadUrl(beatmapSetId) {
@@ -63,7 +65,7 @@ module.exports = class Downloader {
                 res.pipe(writeStream);
 
                 res.on('end', () => {
-                    console.log(`Succesfully downloaded ${filename}`);
+                    console.info(`Succesfully downloaded ${filename}`);
                     resolve(filename)
                 });
             })
@@ -84,7 +86,7 @@ module.exports = class Downloader {
         return sanitizeFilename(filename);
     }
 
-    addToIgnoreList(errorId) {
+    addIgnoreList(errorId) {
         return new Promise((resolve, reject) => {
             // TODO: Creat an ignore list and add the beatmap set id
             resolve(`Failed downloadin beatmap with id ${errorId}`);

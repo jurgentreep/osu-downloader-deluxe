@@ -28,5 +28,7 @@ node app.js
 * Parrallel downloads
     * RxJs
 * Npm run scripts
+* Functional programming
 * Speed limitation
 * GUI
+* Detect when network connection has dropped

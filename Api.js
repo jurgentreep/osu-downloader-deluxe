@@ -20,6 +20,7 @@ module.exports = class Api {
                 });
 
                 Promise.all(promises).then(results => {
+                    console.info('Succesfully retrieved beatmap id\'s for the list of mappers');
                     resolve([].concat(...results));
                 });
             });

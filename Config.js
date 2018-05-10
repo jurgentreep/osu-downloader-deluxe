@@ -17,7 +17,10 @@ module.exports = class Config {
                         mappers.push(line);
                     }
                 })
-                .on('close', () => resolve(mappers));
+                .on('close', () => {
+                    console.info('Succesfully retrieved mappers from mappers.txt');
+                    resolve(mappers);
+                });
         });
     }
 };

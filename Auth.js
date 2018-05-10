@@ -21,11 +21,12 @@ module.exports = class Auth {
     login(next) {
         return new Promise((resolve, reject) => {
             const req = https.request(options, (res) => {
+                console.info('Logged in succesfully');
                 // We only need the headers so there's not need to wait for the response data
-                resolve(res.headers['set-cookie'].join('; '));
+                resolve(res.headers['set-cookie'].join('; '))
             });
 
-            req.on('error', console.error);
+            req.on('error', reject);
 
             req.write(postData);
 

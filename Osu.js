@@ -6,9 +6,9 @@ module.exports = class Osu {
      * Note: reading the directory and extracting the beatmap set id's from
      * the directories within it is a naive way of doing it since the
      * directories can be named anything. If you want to be thorough you
-     * should read the beatmap set id's from the `.osu` file
+     * should read the beatmap set id's from the `.osu` file.
      *
-     * This way is way faster and easier though
+     * I've diced to do it this way because it's easier and faster.
      */
     getInstalledBeatmapIds() {
         return new Promise((resolve, reject) => {
