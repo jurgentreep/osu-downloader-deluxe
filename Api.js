@@ -12,17 +12,14 @@ module.exports = class Api {
 
             config.getMappers().then(mappers => {
                 const promises = mappers.map(mapper => {
-                    return this.getBeatmapIdsFromMapper(mapper)
-                        .catch(error => {
-                            console.error(error);
-                            return new Promise((resolve, reject) => resolve([]));
-                        });
+                    return this.getBeatmapIdsFromMapper(mapper);
                 });
 
                 Promise.all(promises).then(results => {
                     console.info('Succesfully retrieved beatmap id\'s for the list of mappers');
                     resolve([].concat(...results));
-                });
+                })
+                    .catch(console.error);
             });
         });
     }
@@ -39,18 +36,23 @@ module.exports = class Api {
             let rawData = '';
 
             https.request(options, res => {
-                res.setEncoding('utf8');
+                if (res.statusCode === 200) {
+                    res.setEncoding('utf8');
 
-                res.on('data', chunk => rawData += chunk);
+                    res.on('data', chunk => rawData += chunk);
 
-                res.on('end', () => {
-                    resolve(
-                        Array.from(new Set(
-                            JSON.parse(rawData)
-                                .map(metadata => metadata.beatmapset_id)
-                        ))
-                    )
-                });
+                    res.on('end', () => {
+                        console.log(rawData);
+                        resolve(
+                            Array.from(new Set(
+                                JSON.parse(rawData)
+                                    .map(metadata => metadata.beatmapset_id)
+                            ))
+                        )
+                    });
+                } else {
+                    reject(options.path);
+                }
             })
                 .on('error', reject)
                 .end();

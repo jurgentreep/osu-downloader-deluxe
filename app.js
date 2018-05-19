@@ -8,12 +8,12 @@ const Osu = require('./Osu');
 
 function init() {
     Promise.all([
+        initDownloader(),
         getBeatmapIds(),
-        initDownloader()
     ])
-        .then(([beatmapIds, downloader]) => downloader.get(beatmapIds))
-        .then(console.info)
-        .catch(error => console.error('error', error));
+        .then(([downloader, beatmapIds]) => downloader.get(beatmapIds))
+        .then(result => console.info('final then', result))
+        .catch(error => console.error('final catch', error));
 }
 
 init();
@@ -27,7 +27,6 @@ function getBeatmapIds() {
         osu.getBeatmapIds(),
     ])
         .then(results => filterIds(results));
-
 }
 
 function initDownloader() {

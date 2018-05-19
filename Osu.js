@@ -11,7 +11,7 @@ module.exports = class Osu {
      * I've decided to do it this way because it's easier and faster.
      */
     getBeatmapIds() {
-        return new Promise((reject, resolve) => {
+        return new Promise((resolve, reject) => {
             const promises = this.getDirectories().map(directory => {
                 return this.readDirectory(directory)
                     .then(directoryContents => this.extractIds(directoryContents));
