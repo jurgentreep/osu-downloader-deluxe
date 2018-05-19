@@ -19,7 +19,7 @@ module.exports = class Downloader {
     getBeatmapSet(beatmapSetId) {
         return this.getDownloadUrl(beatmapSetId)
             .then(downloadUrl => this.download(downloadUrl))
-            .catch(errorId => this.addIgnoreList(errorId));
+            .catch(() => this.addIgnoreList(beatmapSetId));
     }
 
     getDownloadUrl(beatmapSetId) {
@@ -33,11 +33,12 @@ module.exports = class Downloader {
                     cookie: this.authCookie
                 }
             }, res => {
+                // We only need the headers so there's not need to wait for the response data
                 if (res.headers.location) {
-                    // We only need the headers so there's not need to wait for the response data
-                    resolve(new URL(res.headers.location));
+                    const downloadUrl = new URL(res.headers.location);
+                    resolve(downloadUrl);
                 } else {
-                    reject(beatmapSetId);
+                    reject();
                 }
             })
                 .on('error', reject)
@@ -56,18 +57,22 @@ module.exports = class Downloader {
                     cookie: this.authCookie
                 }
             }, res => {
-                const filename = this.getFilename(res.headers);
-                const downloadPath = path.join(process.env.OSU_DIRECTORY, `/Downloads/${filename}`);
-                const writeStream = fs.createWriteStream(downloadPath);
+                if (res.statusCode === 200) {
+                    const filename = this.getFilename(res.headers);
+                    const downloadPath = path.join(process.env.OSU_DIRECTORY, `/Downloads/${filename}`);
+                    const writeStream = fs.createWriteStream(downloadPath);
 
-                writeStream.on('error', reject);
+                    writeStream.on('error', reject);
 
-                res.pipe(writeStream);
+                    res.pipe(writeStream);
 
-                res.on('end', () => {
-                    console.info(`Succesfully downloaded ${filename}`);
-                    resolve(filename)
-                });
+                    res.on('end', () => {
+                        console.info(`Succesfully downloaded ${filename}`);
+                        resolve(filename)
+                    });
+                } else {
+                    reject();
+                }
             })
                 .on('error', reject)
                 .end();
@@ -87,9 +92,7 @@ module.exports = class Downloader {
     }
 
     addIgnoreList(errorId) {
-        return new Promise((resolve, reject) => {
-            // TODO: Creat an ignore list and add the beatmap set id
-            resolve(`Failed downloadin beatmap with id ${errorId}`);
-        });
+        // TODO: Creat an ignore list and add the beatmap set id
+        console.error(`Failed downloading beatmap with id ${errorId}`);
     }
 };
