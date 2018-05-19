@@ -1,3 +1,4 @@
 /node_modules
 .env
 mappers.txt
+mappers.txt.bak
