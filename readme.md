@@ -15,7 +15,6 @@ cp .env.example .env
 ```
 4. Fill out the `.env` file
 5. Create a `mappers.txt` file and add the names or ids of your favorite mappers to it (one per line)
-6. Create a `Downloads` directory in your osu directory
 
 ## Usage
 
