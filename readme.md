@@ -1,6 +1,6 @@
 # osu! downloader deluxe
 
-Easily download maps from your favorite mappers
+Download all beatmaps from a list of mappers
 
 ## Installation
 
