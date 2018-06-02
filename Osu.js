@@ -10,7 +10,7 @@ module.exports = class Osu {
      *
      * I've decided to do it this way because it's easier and faster.
      */
-    getBeatmapIds() {
+    getInstalledBeatmapIds() {
         return new Promise((resolve, reject) => {
             const promises = this.getDirectories().map(directory => {
                 return this.readDirectory(directory)
@@ -29,7 +29,8 @@ module.exports = class Osu {
     getDirectories() {
         return [
             '/Songs',
-            '/Downloads'
+            '/Downloads',
+            '/Songs/Failed'
         ].map(directoryName =>
             path.join(process.env.OSU_DIRECTORY, directoryName));
     }

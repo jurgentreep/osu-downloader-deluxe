@@ -2,10 +2,12 @@ const https = require('https');
 const fs = require('fs');
 const sanitizeFilename = require('sanitize-filename');
 const path = require('path');
+const Config = require('./Config');
 
 module.exports = class Downloader {
     constructor(authCookie) {
         this.authCookie = authCookie;
+        this.config = new Config();
     }
 
     get(beatmapSetIds) {
@@ -68,7 +70,7 @@ module.exports = class Downloader {
 
                     res.on('end', () => {
                         console.info(`Succesfully downloaded ${filename}`);
-                        resolve(filename)
+                        resolve(filename);
                     });
                 } else {
                     reject();
@@ -92,7 +94,7 @@ module.exports = class Downloader {
     }
 
     addIgnoreList(errorId) {
-        // TODO: Creat an ignore list and add the beatmap set id
         console.error(`Failed downloading beatmap with id ${errorId}`);
+        this.config.storeFailedBeatmapId(errorId);
     }
 };

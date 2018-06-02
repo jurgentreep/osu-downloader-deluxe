@@ -10,7 +10,7 @@ module.exports = class Api {
         this.apiKey = process.env.API_KEY;
     }
 
-    getBeatmapIds() {
+    getNewBeatmapIds() {
         const config = new Config();
 
         if (process.env.USE_LOCAL_BEATMAP_IDS === 'true') {

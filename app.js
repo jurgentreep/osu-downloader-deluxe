@@ -5,15 +5,22 @@ const Auth = require('./Auth');
 const Downloader = require('./Downloader');
 const Api = require('./Api');
 const Osu = require('./Osu');
+const Config = require('./Config');
 
 function init() {
     Promise.all([
         initDownloader(),
         getBeatmapIds(),
     ])
-        .then(([downloader, beatmapIds]) => downloader.get(beatmapIds))
-        .then(result => console.info('final then', result))
-        .catch(error => console.error('final catch', error));
+        .then(([downloader, beatmapIds]) => {
+            if (beatmapIds.length > 0) {
+                return downloader.get(beatmapIds);
+            } else {
+                return Promise.resolve('No beatmaps to download');
+            }
+        })
+        .then(console.info)
+        .catch(console.error);
 }
 
 init();
@@ -21,10 +28,12 @@ init();
 function getBeatmapIds() {
     const api = new Api();
     const osu = new Osu();
+    const config = new Config();
 
     return Promise.all([
-        api.getBeatmapIds(),
-        osu.getBeatmapIds(),
+        api.getNewBeatmapIds(),
+        osu.getInstalledBeatmapIds(),
+        config.getFailedBeatmapIds()
     ])
         .then(results => filterIds(results));
 }
@@ -40,8 +49,9 @@ function initDownloader() {
     });
 }
 
-function filterIds([newBeatmapIds, installedBeatmapIds]) {
+function filterIds([newBeatmapIds, installedBeatmapIds, failedBeatmapIds]) {
     return Promise.resolve(
         newBeatmapIds.filter(beatmapId =>
-            installedBeatmapIds.indexOf(beatmapId) < 0));
+            installedBeatmapIds.indexOf(beatmapId) < 0
+            && failedBeatmapIds.indexOf(beatmapId) < 0));
 }
