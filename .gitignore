@@ -1,7 +1,12 @@
 /node_modules
+.vscode
+
 .env
+.env.bak
+
 mappers.txt
 mappers.txt.bak
 beatmaps.txt
-.vscode
+beatmaps.txt.bak
 failed_beatmaps.txt
+failed_beatmaps.txt.bak

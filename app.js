@@ -1,4 +1,4 @@
-// Bind environtmet variables from .env to process.env
+// Bind environment variables from .env to process.env
 require('dotenv').config();
 
 const Auth = require('./Auth');
@@ -6,12 +6,16 @@ const Downloader = require('./Downloader');
 const Api = require('./Api');
 const Osu = require('./Osu');
 const Config = require('./Config');
+const Setup = require('./Setup');
 
 function init() {
-    Promise.all([
-        initDownloader(),
-        getBeatmapIds(),
-    ])
+    const setup = new Setup();
+
+    setup.checkRequiredFiles()
+        .then(() => Promise.all([
+            initDownloader(),
+            getBeatmapIds(),
+        ]))
         .then(([downloader, beatmapIds]) => {
             if (beatmapIds.length > 0) {
                 return downloader.get(beatmapIds);

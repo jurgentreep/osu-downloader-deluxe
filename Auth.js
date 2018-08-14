@@ -2,8 +2,8 @@ const https = require('https');
 const querystring = require('querystring');
 
 const postData = querystring.stringify({
-    'username': process.env.OSU_USERNAME,
-    'password': process.env.OSU_PASSWORD
+    username: process.env.OSU_USERNAME,
+    password: process.env.OSU_PASSWORD
 });
 
 const options = {

@@ -3,6 +3,7 @@ const fs = require('fs');
 const sanitizeFilename = require('sanitize-filename');
 const path = require('path');
 const Config = require('./Config');
+const { URL } = require('url');
 
 module.exports = class Downloader {
     constructor(authCookie) {

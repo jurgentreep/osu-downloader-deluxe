@@ -6,22 +6,22 @@ Download all beatmaps from a list of mappers
 
 1. Install node.js (version 10 or later) from their [website](https://nodejs.org)
 2. Install the dependencies
-```
-npm install
-```
+    ```
+    npm install
+    ```
 3. Create an environment file
-```
-cp .env.example .env
-```
-4. Fill out the `.env` file
-5. Create a `mappers.txt` file and add the names or ids of your favorite mappers to it (one per line)
+4. Run the app once and let it create the required files
+    ```
+    node app.js
+    ```
+5. Fill out the information in the `.env` file and add mappers to `mappers.txt` file
 
 ## Usage
 
 1. Run the app
-```
-node app.js
-```
+    ```
+    node app.js
+    ```
 
 ## Todo
 * Show progress

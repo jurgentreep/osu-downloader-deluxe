@@ -30,25 +30,24 @@ module.exports = class Api {
                         const promiseSerial = funcs =>
                             funcs.reduce((promise, func) =>
                                 promise.then(result => func().then(Array.prototype.concat.bind(result))),
-                                Promise.resolve([]))
+                                Promise.resolve([]));
 
                         // convert each url to a function that returns a promise
-                        const funcs = mappers.map(mapper => () => this.getBeatmapIdsFromMapper(mapper))
+                        const funcs = mappers.map(mapper => () => this.getBeatmapIdsFromMapper(mapper));
 
-                        console.time('Time to collect all beatmap ids')
+                        console.time('Time to collect all beatmap ids');
 
                         // execute Promises in serial
                         promiseSerial(funcs)
                             .then(results => {
-                                console.info(`Retrieved a total of ${results.length} beatmap ids`)
-                                console.timeEnd('Time to collect all beatmap ids')
+                                console.info(`Retrieved a total of ${results.length} beatmap ids`);
+                                console.timeEnd('Time to collect all beatmap ids');
 
                                 config.storeBeatmapIds(results);
 
-                                resolve(results)
+                                resolve(results);
                             })
-                            .catch(reject)
-
+                            .catch(reject);
                     });
             });
         }
@@ -74,11 +73,7 @@ module.exports = class Api {
                     if (res.statusCode === 200) {
                         console.info(`Got beatmap ids for mapper ${mapper}`);
 
-                        resolve(
-                            Array.from(new Set(
-                                JSON.parse(rawData)
-                                    .map(metadata => metadata.beatmapset_id)))
-                        )
+                        resolve(this.filterBeatmaps(rawData));
                     } else {
                         reject(`error while trying to get beatmap ids for ${options.path}`);
                     }
@@ -87,5 +82,42 @@ module.exports = class Api {
                 .on('error', reject)
                 .end();
         });
+    }
+
+    filterBeatmaps(rawData) {
+        let data = JSON.parse(rawData)
+            .filter(beatmap => {
+                return this.meetsDifficultyCriteria(beatmap.difficultyrating) &&
+                    this.meetsGameModeCriteria(beatmap.mode) &&
+                    this.meetsMapStatusCriteria(beatmap.approved);
+            })
+            .map(beatmap => beatmap.beatmapset_id);
+
+        // Remove duplicates
+        return Array.from(new Set(data));
+    }
+
+    meetsDifficultyCriteria(difficulty) {
+        if (!process.env.MINIMUM_DIFFICULTY) {
+            return true;
+        }
+
+        return parseFloat(difficulty) > parseFloat(process.env.MINIMUM_DIFFICULTY);
+    }
+
+    meetsGameModeCriteria(mode) {
+        if (!process.env.GAME_MODE) {
+            return true;
+        }
+
+        return mode === process.env.GAME_MODE;
+    }
+
+    meetsMapStatusCriteria(status) {
+        if (!process.env.STATUS) {
+            return true;
+        }
+
+        return status === process.env.STATUS;
     }
 };
