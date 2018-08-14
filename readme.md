@@ -4,7 +4,7 @@ Download all beatmaps from a list of mappers
 
 ## Installation
 
-1. Install node.js (version 10 or later) from their [website](https://nodejs.org)
+1. Install node.js (version 8 or later) from their [website](https://nodejs.org)
 2. Install the dependencies
     ```
     npm install
