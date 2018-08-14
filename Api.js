@@ -106,18 +106,27 @@ module.exports = class Api {
     }
 
     meetsGameModeCriteria(mode) {
-        if (!process.env.GAME_MODE) {
+        if (!process.env.GAME_MODES) {
             return true;
         }
 
-        return mode === process.env.GAME_MODE;
+        const gameModes = this.environmentVariableToArray(process.env.GAME_MODES);
+
+        return gameModes.includes(mode);
     }
 
     meetsMapStatusCriteria(status) {
-        if (!process.env.STATUS) {
+        if (!process.env.STATUSES) {
             return true;
         }
 
-        return status === process.env.STATUS;
+        const statuses = this.environmentVariableToArray(process.env.STATUSES);
+
+        return statuses.includes(status);
+    }
+
+    environmentVariableToArray(variable) {
+        return variable.split(',')
+            .map(variable => variable.trim());
     }
 };
