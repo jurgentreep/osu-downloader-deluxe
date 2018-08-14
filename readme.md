@@ -4,21 +4,20 @@ Download all beatmaps from a list of mappers
 
 ## Installation
 
-1. Install node.js (version 8 or later) from their [website](https://nodejs.org)
-2. Install the dependencies
+1. Install node.js (version 8 or later) from their [website](https://nodejs.org).
+2. Install the dependencies.
     ```
     npm install
     ```
-3. Create an environment file
-4. Run the app once and let it create the required files
+3. Run the app once and let it create the required files.
     ```
     node app.js
     ```
-5. Fill out the information in the `.env` file and add mappers to `mappers.txt` file
+4. Fill out the information in the `.env` file and add mappers to `mappers.txt` file.
 
 ## Usage
 
-1. Run the app
+1. Run the app.
     ```
     node app.js
     ```
