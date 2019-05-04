@@ -6,8 +6,8 @@ const Config = require('./Config');
 const { URL } = require('url');
 
 module.exports = class Downloader {
-    constructor(authCookie) {
-        this.authCookie = authCookie;
+    constructor(cookieHeader) {
+        this.cookieHeader = cookieHeader;
         this.config = new Config();
     }
 
@@ -22,18 +22,18 @@ module.exports = class Downloader {
     getBeatmapSet(beatmapSetId) {
         return this.getDownloadUrl(beatmapSetId)
             .then(downloadUrl => this.download(downloadUrl))
-            .catch(() => this.addIgnoreList(beatmapSetId));
+            .catch(error => this.addIgnoreList(beatmapSetId, error));
     }
 
     getDownloadUrl(beatmapSetId) {
         return new Promise((resolve, reject) => {
-            https.request({
+            const request = https.request({
                 hostname: 'osu.ppy.sh',
                 port: 443,
                 path: `/beatmapsets/${beatmapSetId}/download`,
                 method: 'GET',
                 headers: {
-                    cookie: this.authCookie
+                    cookie: this.cookieHeader
                 }
             }, res => {
                 // We only need the headers so there's not need to wait for the response data
@@ -41,9 +41,15 @@ module.exports = class Downloader {
                     const downloadUrl = new URL(res.headers.location);
                     resolve(downloadUrl);
                 } else {
-                    reject();
+                    reject({
+                        message: 'No download url in location header',
+                        headers: res.headers,
+                        requestHeaders: request.getHeaders()
+                    });
                 }
-            })
+            });
+
+            request
                 .on('error', reject)
                 .end();
         });
@@ -57,7 +63,7 @@ module.exports = class Downloader {
                 path: downloadUrl.pathname + downloadUrl.search,
                 method: 'GET',
                 headers: {
-                    cookie: this.authCookie
+                    cookie: this.cookieHeader
                 }
             }, res => {
                 if (res.statusCode === 200) {
@@ -74,7 +80,7 @@ module.exports = class Downloader {
                         resolve(filename);
                     });
                 } else {
-                    reject();
+                    reject(`The status code is ${res.statusCode} instead of 200`);
                 }
             })
                 .on('error', reject)
@@ -94,8 +100,9 @@ module.exports = class Downloader {
         return sanitizeFilename(filename);
     }
 
-    addIgnoreList(errorId) {
-        console.error(`Failed downloading beatmap with id ${errorId}`);
-        this.config.storeFailedBeatmapId(errorId);
+    addIgnoreList(beatmapSetId, error) {
+        console.error(`Failed downloading beatmap with id ${beatmapSetId}`);
+        console.error(error);
+        this.config.storeFailedBeatmapId(beatmapSetId);
     }
 };
