@@ -1,8 +1,9 @@
-const https = require('https');
-const querystring = require('querystring');
+import https from 'https';
+import querystring from 'querystring';
+import { IncomingHttpHeaders } from 'http';
 
-module.exports = class Auth {
-    getCookie(regex, cookieHeader) {
+export default class Auth {
+    getCookie(regex: RegExp, cookieHeader: string[]) {
         for (const cookie of cookieHeader) {
             const result = regex.exec(cookie);
 
@@ -12,7 +13,11 @@ module.exports = class Auth {
         }
     }
 
-    getCookieHeader(headers) {
+    getCookieHeader(headers: IncomingHttpHeaders) {
+        if (!headers['set-cookie']) {
+            throw new Error('No cookie header');
+        }
+
         const cookieHeader = headers['set-cookie'];
         const cloudflareRegex = /__cfduid=[a-zA-Z0-9]*/;
         const osuRegex = /osu_session=(?!deleted)[a-zA-Z0-9%]*/;
@@ -23,7 +28,7 @@ module.exports = class Auth {
         return [cloudflareCookie, osuCookie].join('; ');
     }
 
-    login() {
+    login(): Promise<string> {
         return new Promise((resolve, reject) => {
             const postData = querystring.stringify({
                 username: process.env.OSU_USERNAME,

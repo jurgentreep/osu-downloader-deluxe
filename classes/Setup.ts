@@ -1,7 +1,7 @@
-const fs = require('fs');
+import fs from 'fs';
 const { COPYFILE_EXCL } = fs.constants;
 
-module.exports = class Setup {
+export default class Setup {
 
     checkRequiredFiles() {
         return Promise.all([

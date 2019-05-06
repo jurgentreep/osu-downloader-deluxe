@@ -1,31 +1,42 @@
-const https = require('https');
-const fs = require('fs');
-const sanitizeFilename = require('sanitize-filename');
-const path = require('path');
-const Config = require('./Config');
-const { URL } = require('url');
+import https from 'https';
+import fs from 'fs';
+import sanitizeFilename from 'sanitize-filename';
+import path from 'path';
+import Config from './Config';
+import { URL } from 'url';
+import { IncomingHttpHeaders } from 'http';
 
-module.exports = class Downloader {
-    constructor(cookieHeader) {
+export default class Downloader {
+    cookieHeader: string;
+    config: Config;
+    osuDirectory: string;
+
+    constructor(cookieHeader: string) {
         this.cookieHeader = cookieHeader;
         this.config = new Config();
+
+        if (process.env.OSU_DIRECTORY) {
+            this.osuDirectory = process.env.OSU_DIRECTORY;
+        } else {
+            throw new Error('OSU_DIRECTORY env variable not set');
+        }
     }
 
-    get(beatmapSetIds) {
+    get(beatmapSetIds: string[]): Promise<string | void> {
         console.info('Starting downloads');
 
-        return beatmapSetIds.reduce((promise, beatmapSetId) => {
+        return beatmapSetIds.reduce<Promise<string | void>>((promise, beatmapSetId) => {
             return promise.then(() => this.getBeatmapSet(beatmapSetId));
         }, Promise.resolve());
     }
 
-    getBeatmapSet(beatmapSetId) {
+    getBeatmapSet(beatmapSetId: string) {
         return this.getDownloadUrl(beatmapSetId)
             .then(downloadUrl => this.download(downloadUrl))
             .catch(error => this.addIgnoreList(beatmapSetId, error));
     }
 
-    getDownloadUrl(beatmapSetId) {
+    getDownloadUrl(beatmapSetId: string): Promise<URL> {
         return new Promise((resolve, reject) => {
             const request = https.request({
                 hostname: 'osu.ppy.sh',
@@ -55,7 +66,7 @@ module.exports = class Downloader {
         });
     }
 
-    download(downloadUrl) {
+    download(downloadUrl: URL): Promise<string> {
         return new Promise((resolve, reject) => {
             https.request({
                 hostname: downloadUrl.host,
@@ -68,7 +79,7 @@ module.exports = class Downloader {
             }, res => {
                 if (res.statusCode === 200) {
                     const filename = this.getFilename(res.headers);
-                    const downloadPath = path.join(process.env.OSU_DIRECTORY, `/Downloads/${filename}`);
+                    const downloadPath = path.join(this.osuDirectory, `/Downloads/${filename}`);
                     const writeStream = fs.createWriteStream(downloadPath);
 
                     writeStream.on('error', reject);
@@ -88,19 +99,30 @@ module.exports = class Downloader {
         });
     }
 
-    getFilename(headers) {
-        const filename = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/i
-            .exec(headers['content-disposition'])[2];
+    getFilename(headers: IncomingHttpHeaders) {
+        if (!headers['content-disposition']) {
+            throw new Error('Content disposition header not set');
+        }
 
-        /**
-         * The header doesn't always return a valid filename
-         * Example: 114137 P*Light - TRIGGER*HAPPY (Extend Ver.).osz
-         * which contains the * character
-         */
-        return sanitizeFilename(filename);
+        const matches = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/i
+            .exec(headers['content-disposition']);
+
+        if (!matches) {
+            throw new Error('Could not extract filename from header');
+        } else {
+            const filename = matches[2];
+
+            /**
+             * The header doesn't always return a valid filename
+             * Example: 114137 P*Light - TRIGGER*HAPPY (Extend Ver.).osz
+             * which contains the * character
+             */
+            return sanitizeFilename(filename);
+        }
     }
 
-    addIgnoreList(beatmapSetId, error) {
+    // TODO: make sure we know what kind of error it is
+    addIgnoreList(beatmapSetId: string, error: any) {
         console.error(`Failed downloading beatmap with id ${beatmapSetId}`);
         console.error(error);
         this.config.storeFailedBeatmapId(beatmapSetId);
