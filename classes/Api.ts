@@ -1,16 +1,23 @@
-const https = require('https');
-const Config = require('./Config');
+import https from 'https';
+import Config from './Config';
+import { BeatMapSet } from 'interfaces/beatmapset';
 
 /**
  * Don't go over 1200 requests per second you'll get an captcha.
  * Luckily this is removed after a while but just keep it in mind.
  */
-module.exports = class Api {
+export default class Api {
+    private apiKey: string;
+
     constructor() {
-        this.apiKey = process.env.API_KEY;
+        if (process.env.API_KEY) {
+            this.apiKey = process.env.API_KEY;
+        } else {
+            throw new Error('API_KEY variable not set');
+        }
     }
 
-    getNewBeatmapIds() {
+    getNewBeatmapIds(): Promise<string[]> {
         const config = new Config();
 
         if (process.env.USE_LOCAL_BEATMAP_IDS === 'true') {
@@ -27,10 +34,16 @@ module.exports = class Api {
                          * of functions and executes each promise. The result of each promise
                          * get's concatonated onto the array.
                          */
-                        const promiseSerial = funcs =>
-                            funcs.reduce((promise, func) =>
-                                promise.then(result => func().then(Array.prototype.concat.bind(result))),
-                                Promise.resolve([]));
+                        const promiseSerial = (funcs: (() => Promise<string[]>)[]) =>
+                            funcs.reduce<Promise<string[]>>(
+                                (promise, func) =>
+                                    promise.then(
+                                        result => func().then(
+                                            Array.prototype.concat.bind(result)
+                                        )
+                                    ),
+                                Promise.resolve([])
+                            );
 
                         // convert each url to a function that returns a promise
                         const funcs = mappers.map(mapper => () => this.getBeatmapIdsFromMapper(mapper));
@@ -53,7 +66,7 @@ module.exports = class Api {
         }
     }
 
-    getBeatmapIdsFromMapper(mapper) {
+    getBeatmapIdsFromMapper(mapper: string): Promise<string[]> {
         return new Promise((resolve, reject) => {
             const options = {
                 hostname: 'osu.ppy.sh',
@@ -84,20 +97,21 @@ module.exports = class Api {
         });
     }
 
-    filterBeatmaps(rawData) {
-        let data = JSON.parse(rawData)
-            .filter(beatmap => {
-                return this.meetsDifficultyCriteria(beatmap.difficultyrating) &&
-                    this.meetsGameModeCriteria(beatmap.mode) &&
-                    this.meetsMapStatusCriteria(beatmap.approved);
-            })
-            .map(beatmap => beatmap.beatmapset_id);
+    filterBeatmaps(rawData: string) {
+        const data: BeatMapSet[] = JSON.parse(rawData);
+
+        const beatMapSetIds = data.filter(beatMapSet => {
+            return this.meetsDifficultyCriteria(beatMapSet.difficultyrating) &&
+                this.meetsGameModeCriteria(beatMapSet.mode) &&
+                this.meetsMapStatusCriteria(beatMapSet.approved);
+        })
+            .map(beatMapSet => beatMapSet.beatmapset_id);
 
         // Remove duplicates
-        return Array.from(new Set(data));
+        return Array.from(new Set(beatMapSetIds));
     }
 
-    meetsDifficultyCriteria(difficulty) {
+    meetsDifficultyCriteria(difficulty: string) {
         if (!process.env.MINIMUM_DIFFICULTY) {
             return true;
         }
@@ -105,7 +119,7 @@ module.exports = class Api {
         return parseFloat(difficulty) > parseFloat(process.env.MINIMUM_DIFFICULTY);
     }
 
-    meetsGameModeCriteria(mode) {
+    meetsGameModeCriteria(mode: string) {
         if (!process.env.GAME_MODES) {
             return true;
         }
@@ -115,7 +129,7 @@ module.exports = class Api {
         return gameModes.includes(mode);
     }
 
-    meetsMapStatusCriteria(status) {
+    meetsMapStatusCriteria(status: string) {
         if (!process.env.STATUSES) {
             return true;
         }
@@ -125,7 +139,7 @@ module.exports = class Api {
         return statuses.includes(status);
     }
 
-    environmentVariableToArray(variable) {
+    environmentVariableToArray(variable: string) {
         return variable.split(',')
             .map(variable => variable.trim());
     }

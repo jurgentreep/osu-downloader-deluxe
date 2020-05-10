@@ -1,12 +1,12 @@
 // Bind environment variables from .env to process.env
 require('dotenv').config();
 
-const Auth = require('./Auth');
-const Downloader = require('./Downloader');
-const Api = require('./Api');
-const Osu = require('./Osu');
-const Config = require('./Config');
-const Setup = require('./Setup');
+import Auth from './classes/Auth';
+import Downloader from './classes/Downloader';
+import Api from './classes/Api';
+import Osu from './classes/Osu';
+import Config from './classes/Config';
+import Setup from './classes/Setup';
 
 function init() {
     const setup = new Setup();
@@ -42,18 +42,18 @@ function getBeatmapIds() {
         .then(results => filterIds(results));
 }
 
-function initDownloader() {
+function initDownloader(): Promise<Downloader> {
     const auth = new Auth();
 
     return new Promise((resolve, reject) => {
         auth.login()
-            .then(authCookie =>
-                resolve(new Downloader(authCookie)))
+            .then(cookieHeader =>
+                resolve(new Downloader(cookieHeader)))
             .catch(reject);
     });
 }
 
-function filterIds([newBeatmapIds, installedBeatmapIds, failedBeatmapIds]) {
+function filterIds([newBeatmapIds, installedBeatmapIds, failedBeatmapIds]: [string[], string[], string[]]) {
     return Promise.resolve(
         newBeatmapIds.filter(beatmapId =>
             installedBeatmapIds.indexOf(beatmapId) < 0

@@ -1,7 +1,16 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-module.exports = class Osu {
+export default class Osu {
+    osuDirectory: string;
+
+    constructor() {
+        if (process.env.OSU_DIRECTORY) {
+            this.osuDirectory = process.env.OSU_DIRECTORY;
+        } else {
+            throw new Error('OSU_DIRECTORY environment variable not set');
+        }
+    }
     /**
      * Note: reading the directory and extracting the beatmap set id's from
      * the directories within it is a naive way of doing it since the
@@ -10,32 +19,36 @@ module.exports = class Osu {
      *
      * I've decided to do it this way because it's easier and faster.
      */
-    getInstalledBeatmapIds() {
+    getInstalledBeatmapIds(): Promise<string[]> {
         return new Promise((resolve, reject) => {
             const promises = this.getDirectories().map(directory => {
                 return this.readDirectory(directory)
-                    .then(directoryContents => this.extractIds(directoryContents));
+                    .then(directoryContents => this.extractIds(directoryContents))
+                    .catch(directory => {
+                        console.warn(`${directory} does not exist`);
+                        return Promise.resolve([]);
+                    });
             });
 
             Promise.all(promises)
                 .then(beatmapIdArrays => {
                     console.log('Succesfully retrieved beatmap ids from osu installation');
-                    resolve([].concat(...beatmapIdArrays));
+                    resolve(([] as string[]).concat(...beatmapIdArrays));
                 })
                 .catch(reject);
         });
     }
 
-    getDirectories() {
+    getDirectories(): string[] {
         return [
             '/Songs',
             '/Downloads',
             '/Songs/Failed'
         ].map(directoryName =>
-            path.join(process.env.OSU_DIRECTORY, directoryName));
+            path.join(this.osuDirectory, directoryName));
     }
 
-    readDirectory(directory) {
+    readDirectory(directory: string): Promise<string[]> {
         return new Promise((resolve, reject) => {
             fs.readdir(directory, (error, files) => {
                 if (error) {
@@ -47,17 +60,17 @@ module.exports = class Osu {
         });
     }
 
-    extractIds(files) {
-        const beatmapIds = files.map(file => {
+    extractIds(files: string[]): Promise<string[]> {
+        const beatMapSetIds = files.reduce<string[]>((acc, file) => {
             const match = /^(\d+)/.exec(file);
 
-            // Maybe return 0 intead of null so the elements kinds stays PACKED_SMI_ELEMENTS
-            // and is thus faster to process although I like the clarity of null.
-            // Besides I'm using a regex function above which is way more expensive xD
-            return match ? match[0] : null;
-        })
-            .filter(beatmapId => beatmapId !== null);
+            if (match) {
+                acc.push(match[0]);
+            }
 
-        return Promise.resolve(beatmapIds);
+            return acc;
+        }, []);
+
+        return Promise.resolve(beatMapSetIds);
     }
 };

@@ -1,29 +1,34 @@
-const https = require('https');
-const querystring = require('querystring');
+import https from 'https';
+import querystring from 'querystring';
+import { IncomingHttpHeaders } from 'http';
+import { CookieJar, Cookie } from 'tough-cookie';
 
-module.exports = class Auth {
-    getCookie(regex, cookieHeader) {
-        for (const cookie of cookieHeader) {
-            const result = regex.exec(cookie);
-
-            if (result) {
-                return result;
-            }
+export default class Auth {
+    getCookieHeader(headers: IncomingHttpHeaders) {
+        if (!headers['set-cookie']) {
+            throw new Error('No cookie header');
         }
+
+        const cookieJar = new CookieJar();
+
+        headers['set-cookie'].forEach(cookieHeader => {
+            const cookie = Cookie.parse(cookieHeader);
+            if (cookie) {
+                try {
+                    cookieJar.setCookieSync(cookie, 'https://osu.ppy.sh/session');
+                } catch (e) {
+                    console.log(cookie);
+                    console.error(e);
+                }
+            }
+        });
+
+        const cookie = cookieJar.getCookieStringSync('https://osu.ppy.sh/session');
+
+        return cookie;
     }
 
-    getCookieHeader(headers) {
-        const cookieHeader = headers['set-cookie'];
-        const cloudflareRegex = /__cfduid=[a-zA-Z0-9]*/;
-        const osuRegex = /osu_session=(?!deleted)[a-zA-Z0-9%]*/;
-
-        const cloudflareCookie = this.getCookie(cloudflareRegex, cookieHeader);
-        const osuCookie = this.getCookie(osuRegex, cookieHeader);
-
-        return [cloudflareCookie, osuCookie].join('; ');
-    }
-
-    login() {
+    login(): Promise<string> {
         return new Promise((resolve, reject) => {
             const postData = querystring.stringify({
                 username: process.env.OSU_USERNAME,

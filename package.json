@@ -2,15 +2,25 @@
   "name": "osu-downloader-deluxe",
   "version": "1.0.0",
   "description": "Download beatmaps from your favorite mapper",
-  "main": "app.js",
-  "dependencies": {
-    "dotenv": "^7.0.0",
-    "sanitize-filename": "^1.6.1"
-  },
-  "devDependencies": {},
+  "main": "app.ts",
   "scripts": {
-    "start": "node app.js",
+    "tsc": "tsc",
+    "start": "ts-node app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/cookiejar": "^2.1.1",
+    "@types/node": "^13.13.5",
+    "@types/sanitize-filename": "^1.6.3",
+    "@types/tough-cookie": "^4.0.0",
+    "cookiejar": "^2.1.2",
+    "dotenv": "^8.2.0",
+    "sanitize-filename": "^1.6.3",
+    "tough-cookie": "^4.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^8.10.1",
+    "typescript": "^3.8.3"
   },
   "repository": {
     "type": "git",

@@ -11,7 +11,7 @@ Download all beatmaps from a list of mappers
     ```
 3. Run the app once and let it create the required files.
     ```
-    node app.js
+    npm start
     ```
 4. Fill out the information in the `.env` file and add mappers to `mappers.txt` file.
 
@@ -19,7 +19,7 @@ Download all beatmaps from a list of mappers
 
 1. Run the app.
     ```
-    node app.js
+    npm start
     ```
 
 ## Todo

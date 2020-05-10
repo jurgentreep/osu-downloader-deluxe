@@ -1,10 +1,10 @@
-const readline = require('readline');
-const fs = require('fs');
+import readline from 'readline';
+import fs from 'fs';
 
-module.exports = class Config {
-    getMappers() {
+export default class Config {
+    getMappers(): Promise<string[]> {
         return new Promise((resolve, reject) => {
-            const mappers = [];
+            const mappers: string[] = [];
 
             readline.createInterface({
                 input: fs.createReadStream('mappers.txt'),
@@ -24,12 +24,12 @@ module.exports = class Config {
         });
     }
 
-    storeBeatmapIds(beatmapIds) {
+    storeBeatmapIds(beatmapSetIds: string[]) {
         return new Promise((resolve, reject) => {
             const stream = fs.createWriteStream('beatmaps.txt')
 
             stream.once('open', fd => {
-                beatmapIds.forEach(beatmapId => stream.write(`${beatmapId}\n`));
+                beatmapSetIds.forEach(beatmapSetId => stream.write(`${beatmapSetId}\n`));
                 stream.end();
 
                 console.info('Beatmap ids succesfully written to beatmaps.txt');
@@ -38,7 +38,7 @@ module.exports = class Config {
         });
     }
 
-    getBeatmapIds() {
+    getBeatmapIds(): Promise<string[]> {
         const promise = this.readIdsFromFile('beatmaps.txt');
 
         promise.then(() => console.info('Succesfully retrieved beatmap ids from beatmaps.txt'));
@@ -46,14 +46,14 @@ module.exports = class Config {
         return promise;
     }
 
-    storeFailedBeatmapId(beatmapId) {
+    storeFailedBeatmapId(beatmapSetId: string) {
         return new Promise((resolve, reject) => {
             const stream = fs.createWriteStream('failed_beatmaps.txt', {
                 flags: 'a'
             });
 
             stream.once('open', fd => {
-                stream.write(`${beatmapId}\n`);
+                stream.write(`${beatmapSetId}\n`);
                 stream.end();
 
                 resolve('Succesfully written failed beatmap id to file');
@@ -61,7 +61,7 @@ module.exports = class Config {
         });
     }
 
-    getFailedBeatmapIds() {
+    getFailedBeatmapIds(): Promise<string[]> {
         const promise = this.readIdsFromFile('failed_beatmaps.txt');
 
         promise.then(() => console.info('Succesfully retrieved failed beatmap ids from failed_beatmaps.txt'));
@@ -69,9 +69,9 @@ module.exports = class Config {
         return promise;
     }
 
-    readIdsFromFile(path) {
+    readIdsFromFile(path: string): Promise<string[]> {
         return new Promise((resolve, reject) => {
-            const beatmapIds = [];
+            const beatmapIds: string[] = [];
 
             readline.createInterface({
                 input: fs.createReadStream(path),
