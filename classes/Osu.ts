@@ -23,7 +23,11 @@ export default class Osu {
         return new Promise((resolve, reject) => {
             const promises = this.getDirectories().map(directory => {
                 return this.readDirectory(directory)
-                    .then(directoryContents => this.extractIds(directoryContents));
+                    .then(directoryContents => this.extractIds(directoryContents))
+                    .catch(directory => {
+                        console.warn(`${directory} does not exist`);
+                        return Promise.resolve([]);
+                    });
             });
 
             Promise.all(promises)
