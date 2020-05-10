@@ -1,31 +1,31 @@
 import https from 'https';
 import querystring from 'querystring';
 import { IncomingHttpHeaders } from 'http';
+import { CookieJar, Cookie } from 'tough-cookie';
 
 export default class Auth {
-    getCookie(regex: RegExp, cookieHeader: string[]) {
-        for (const cookie of cookieHeader) {
-            const result = regex.exec(cookie);
-
-            if (result) {
-                return result;
-            }
-        }
-    }
-
     getCookieHeader(headers: IncomingHttpHeaders) {
         if (!headers['set-cookie']) {
             throw new Error('No cookie header');
         }
 
-        const cookieHeader = headers['set-cookie'];
-        const cloudflareRegex = /__cfduid=[a-zA-Z0-9]*/;
-        const osuRegex = /osu_session=(?!deleted)[a-zA-Z0-9%]*/;
+        const cookieJar = new CookieJar();
 
-        const cloudflareCookie = this.getCookie(cloudflareRegex, cookieHeader);
-        const osuCookie = this.getCookie(osuRegex, cookieHeader);
+        headers['set-cookie'].forEach(cookieHeader => {
+            const cookie = Cookie.parse(cookieHeader);
+            if (cookie) {
+                try {
+                    cookieJar.setCookieSync(cookie, 'https://osu.ppy.sh/session');
+                } catch (e) {
+                    console.log(cookie);
+                    console.error(e);
+                }
+            }
+        });
 
-        return [cloudflareCookie, osuCookie].join('; ');
+        const cookie = cookieJar.getCookieStringSync('https://osu.ppy.sh/session');
+
+        return cookie;
     }
 
     login(): Promise<string> {
