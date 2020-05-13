@@ -34,7 +34,13 @@ export default class Downloader {
     getBeatmapSet(beatmapSetId: string) {
         return this.getDownloadUrl(beatmapSetId)
             .then(downloadUrl => this.download(downloadUrl))
-            .catch(error => this.addIgnoreList(beatmapSetId, error));
+            .catch(error => {
+                if (error === 'We reached the download limit :(') {
+                    return Promise.reject('We reached the download limit :(');
+                } else {
+                    this.addIgnoreList(beatmapSetId, error);
+                }
+            });
     }
 
     getDownloadUrl(beatmapSetId: string): Promise<URL> {
@@ -55,12 +61,10 @@ export default class Downloader {
                 if (res.headers.location) {
                     const downloadUrl = new URL(res.headers.location);
                     resolve(downloadUrl);
+                } else if (res.statusCode === 403) {
+                    reject('We reached the download limit :(');
                 } else {
-                    reject({
-                        message: 'No download url in location header',
-                        headers: res.headers,
-                        requestHeaders: request.getHeaders()
-                    });
+                    reject('No download url in location header');
                 }
             });
 
