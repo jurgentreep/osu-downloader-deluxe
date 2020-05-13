@@ -5,14 +5,15 @@ import path from 'path';
 import Config from './Config';
 import { URL } from 'url';
 import { IncomingHttpHeaders } from 'http';
+import Auth from './Auth';
 
 export default class Downloader {
-    cookieHeader: string;
+    auth: Auth;
     config: Config;
     osuDirectory: string;
 
-    constructor(cookieHeader: string) {
-        this.cookieHeader = cookieHeader;
+    constructor(auth: Auth) {
+        this.auth = auth;
         this.config = new Config();
 
         if (process.env.OSU_DIRECTORY) {
@@ -44,7 +45,10 @@ export default class Downloader {
                 path: `/beatmapsets/${beatmapSetId}/download`,
                 method: 'GET',
                 headers: {
-                    cookie: this.cookieHeader
+                    cookie: this.auth.cookieJar.getCookieStringSync(`https://osu.ppy.sh/beatmapsets/${beatmapSetId}/download`),
+                    // will redirect to beatmap detail page if referer header is missing
+                    // it actually doesn't matter what the referer is as long as it's present
+                    referer: `https://osu.ppy.sh/beatmapsets/${beatmapSetId}`
                 }
             }, res => {
                 // We only need the headers so there's not need to wait for the response data
@@ -74,7 +78,7 @@ export default class Downloader {
                 path: downloadUrl.pathname + downloadUrl.search,
                 method: 'GET',
                 headers: {
-                    cookie: this.cookieHeader
+                    cookie: this.auth.cookieJar.getCookieStringSync(downloadUrl.pathname + downloadUrl.search)
                 }
             }, res => {
                 if (res.statusCode === 200) {

@@ -4,35 +4,65 @@ import { IncomingHttpHeaders } from 'http';
 import { CookieJar, Cookie } from 'tough-cookie';
 
 export default class Auth {
-    getCookieHeader(headers: IncomingHttpHeaders) {
+    cookieJar: CookieJar;
+
+    constructor() {
+        this.cookieJar = new CookieJar();
+    }
+
+    // Only for debugging purposes
+    // The chat page is one of the few pages that sends a 401 instead of redirecting you to another page
+    // We can use this to determine if we succesfully logged in
+    goToChat() {
+        return new Promise((resolve, reject) => {
+            https.request({
+                hostname: 'osu.ppy.sh',
+                port: 443,
+                path: '/community/chat',
+                method: 'GET',
+                headers: {
+                    cookie: this.cookieJar.getCookieStringSync('https://osu.ppy.sh/cummunity/chat'),
+                }
+            }, (res) => {
+                if (res.statusCode === 200) {
+                    this.setCookieHeader(res.headers, 'https://osu.ppy.sh/cummunity/chat');
+
+                    resolve();
+                } else {
+                    reject('Going to chatpage failed');
+                }
+            })
+                .on('error', reject)
+                .end();
+        });
+    }
+
+    setCookieHeader(headers: IncomingHttpHeaders, currentUrl: string) {
         if (!headers['set-cookie']) {
             throw new Error('No cookie header');
         }
-
-        const cookieJar = new CookieJar();
 
         headers['set-cookie'].forEach(cookieHeader => {
             const cookie = Cookie.parse(cookieHeader);
             if (cookie) {
                 try {
-                    cookieJar.setCookieSync(cookie, 'https://osu.ppy.sh/session');
+                    this.cookieJar.setCookieSync(cookie, currentUrl);
                 } catch (e) {
-                    console.log(cookie);
-                    console.error(e);
+                    // Not all cookies are valid
+                    // Invalid cookies can safely be ingnored
+                    // console.log(cookie);
+                    // console.error(e);
                 }
             }
         });
-
-        const cookie = cookieJar.getCookieStringSync('https://osu.ppy.sh/session');
-
-        return cookie;
     }
 
-    login(): Promise<string> {
+    login(): Promise<void> {
         return new Promise((resolve, reject) => {
             const postData = querystring.stringify({
                 username: process.env.OSU_USERNAME,
                 password: process.env.OSU_PASSWORD
+                // the real website also sends a _token but this isn't actually required to log in
             });
 
             const req = https.request({
@@ -47,14 +77,14 @@ export default class Auth {
             }, (res) => {
                 console.info('Logged in succesfully');
 
-                const cookieHeader = this.getCookieHeader(res.headers);
+                this.setCookieHeader(res.headers, 'https://osu.ppy.sh/session');
 
-                resolve(cookieHeader);
+                resolve()
             });
 
             req.write(postData);
             req.on('error', reject);
             req.end();
         })
-    }
+    };
 };
