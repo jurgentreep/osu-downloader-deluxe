@@ -1,6 +1,6 @@
 {
   "name": "osu-downloader-deluxe",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Download beatmaps from your favorite mapper",
   "main": "app.ts",
   "scripts": {
