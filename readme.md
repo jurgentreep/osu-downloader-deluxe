@@ -31,7 +31,7 @@ Download all beatmaps from a list of mappers
 * Show progress
 * Parrallel downloads
     * RxJs
-* Npm run scripts
+* ~~Npm run scripts~~
 * Functional programming
 * Speed limitation
 * GUI
