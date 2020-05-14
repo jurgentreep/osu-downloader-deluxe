@@ -11,10 +11,12 @@ export default class Downloader {
     auth: Auth;
     config: Config;
     osuDirectory: string;
+    startTime: number;
 
     constructor(auth: Auth) {
         this.auth = auth;
         this.config = new Config();
+        this.startTime = new Date().valueOf();
 
         if (process.env.OSU_DIRECTORY) {
             this.osuDirectory = process.env.OSU_DIRECTORY;
@@ -36,7 +38,20 @@ export default class Downloader {
             .then(downloadUrl => this.download(downloadUrl))
             .catch(error => {
                 if (error === 'We reached the download limit :(') {
-                    return Promise.reject('We reached the download limit :(');
+                    const currentTime = new Date().valueOf();
+                    const difference = currentTime - this.startTime;
+                    const remainder = (60 * 60 * 1000) - difference;
+
+                    console.log('We reached the download limit :(');
+                    console.log(`Waiting for ${remainder} milliseconds (${Math.round(remainder / (60 * 1000))} minutes)`);
+                    console.log(`Quit the program at any time using Ctrl + C`);
+
+                    return new Promise<string | void>((resolve) => {
+                        setTimeout(() => {
+                            this.startTime = new Date().valueOf();
+                            resolve(this.getBeatmapSet(beatmapSetId));
+                        }, remainder);
+                    });
                 } else {
                     this.addIgnoreList(beatmapSetId, error);
                 }
@@ -62,6 +77,7 @@ export default class Downloader {
                     const downloadUrl = new URL(res.headers.location);
                     resolve(downloadUrl);
                 } else if (res.statusCode === 403) {
+                    // Looks like the download limit is 200 per hour for non support users
                     reject('We reached the download limit :(');
                 } else {
                     reject('No download url in location header');
